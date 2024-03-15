@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    environment {
+        GIT_EXECUTABLE = '/usr/bin/git'
+    }
     stages {
         stage('Checkout') {
             steps {
