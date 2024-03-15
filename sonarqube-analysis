@@ -1,6 +1,6 @@
 node {
     stage('SCM Checkout') {
-        git 'https://github.com/javahometech/my-app'
+        git 'https://github.com/pv-commits/my-app'
     }
     
     // Add the command to prune the remote before fetching
