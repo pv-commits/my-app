@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_EXECUTABLE = '/usr/bin/git'
+        MVN_HOME = tool name: 'maven-3', type: 'maven'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/pv-commits/my-app.git'
+            }
+        }
+        
+        stage('Prune Remote') {
+            steps {
+                sh 'git remote prune origin'
+            }
+        }
+
+        stage('Compile-Package') {
+            steps {
+                sh "${env.MVN_HOME}/bin/mvn package"
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar9') {
+                    sh "${env.MVN_HOME}/bin/mvn sonar:sonar"
+                }
+            }
+        }
+
+        stage('Quality Gate Status Check') {
+            steps {
+                timeout(time: 1, unit: 'HOURS') {
+                    def qg = waitForQualityGate()
+                    if (qg.status != 'OK') {
+                        slackSend baseUrl: 'https://hooks.slack.com/services/',
+                                  channel: '#jenkins-pipeline-demo',
+                                  color: 'danger',
+                                  message: 'SonarQube Analysis Failed',
+                                  teamDomain: 'javahomecloud',
+                                  tokenCredentialId: 'slack-demo'
+                        error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                    }
+                }
+            }
+        }
+
+        stage('Email Notification') {
+            steps {
+                mail bcc: '', body: '''Hi Welcome to Jenkins email alerts
+                Thanks
+                Hari''', cc: '', from: '', replyTo: '', subject: 'Jenkins Job', to: 'pbaghe03@gmail.com'
+            }
+        }
+
+        stage('Slack Notification') {
+            steps {
+                slackSend baseUrl: 'https://hooks.slack.com/services/',
+                          channel: '#jenkins-pipeline-demo',
+                          color: 'good',
+                          message: 'Welcome to Jenkins, Slack!',
+                          teamDomain: 'javahomecloud',
+                          tokenCredentialId: 'slack-demo'
+            }
+        }
+    }
+}
