@@ -1,1 +1,64 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_EXECUTABLE = '/usr/bin/git'
+        MVN_HOME = tool name: 'maven-3', type: 'maven'
+    }
+
+    stages {
+        stage('SCM Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/pv-commits/my-app.git'
+            }
+        }
+
+        stage('Prune Remote') {
+            steps {
+                sh 'git remote prune origin'
+            }
+        }
+
+        stage('Compile-Package') {
+            steps {
+                sh "${env.MVN_HOME}/bin/mvn package"
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('sonar9') {
+                    sh "${env.MVN_HOME}/bin/mvn sonar:sonar"
+                }
+            }
+        }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                sshagent(['tomcat-dev']) {
+                    sh 'scp -o StrictHostKeyChecking=no target/*.war ec2-user@172.31.0.50:/opt/tomcat8/webapps/'
+                }
+            }
+        }
+
+        stage('Email Notification') {
+            steps {
+                mail bcc: '', body: '''Hi Welcome to Jenkins email alerts
+                Thanks
+                Puru''', cc: '', from: '', replyTo: '', subject: 'Jenkins Job', to: 'pbaghe03@gmail.com'
+            }
+        }
+
+        stage('Slack Notification') {
+            steps {
+                slackSend baseUrl: 'https://hooks.slack.com/services/',
+                          channel: '#jenkins-pipeline-demo',
+                          color: 'danger',
+                          message: 'Welcome to Jenkins, Slack!',
+                          teamDomain: 'javahomecloud',
+                          tokenCredentialId: 'slack-demo'
+            }
+        }
+    }
+}
 
