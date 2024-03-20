@@ -64,7 +64,7 @@ pipeline {
             steps {
                 slackSend baseUrl: 'https://hooks.slack.com/services/',
                           channel: '#jenkins-pipeline-demo',
-                          color: 'good',
+                          color: 'danger',
                           message: 'Welcome to Jenkins, Slack!',
                           teamDomain: 'javahomecloud',
                           tokenCredentialId: 'slack-demo'
