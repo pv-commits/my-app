@@ -19,18 +19,19 @@ pipeline {
         }
 
         stage('Compile-Package') {
-            environment {
-                 MVN_HOME = tool 'maven-3'
-            }
             steps {
-                sh "${env.MVN_HOME}/bin/mvn package"
+                script {
+                    def mvnHome = tool 'maven-3'
+                    sh "${mvnHome}/bin/mvn package"
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar9') {
-                    sh "${env.MVN_HOME}/bin/mvn sonar:sonar -Dsonar.host.url=http://13.232.18.17:9000"
+                    def mvnHome = tool 'maven-3'
+                    sh "${mvnHome}/bin/mvn sonar:sonar -Dsonar.host.url=http://13.232.18.17:9000"
                 }
             }
         }
@@ -38,7 +39,8 @@ pipeline {
         stage('Deploy to Tomcat') {
             steps {
                 sshagent(['tomcat-dev']) {
-                    sh 'scp -o StrictHostKeyChecking=no target/*.war ec2-user@65.0.138.8:/opt/tomcat8/webapps/'
+                    def mvnHome = tool 'maven-3'
+                    sh "scp -o StrictHostKeyChecking=no ${mvnHome}/target/*.war ec2-user@65.0.138.8:/opt/tomcat8/webapps/"
                 }
             }
         }
@@ -63,4 +65,3 @@ pipeline {
         }
     }
 }
-
