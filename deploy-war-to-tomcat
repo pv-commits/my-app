@@ -28,7 +28,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar9') {
-                    sh "${env.MVN_HOME}/bin/mvn sonar:sonar"
+                    sh "${env.MVN_HOME}/bin/mvn sonar:sonar -Dsonar.host.url=http://13.232.18.17:9000"
                 }
             }
         }
